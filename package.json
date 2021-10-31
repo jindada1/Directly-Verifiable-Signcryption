@@ -1,0 +1,32 @@
+{
+  "name": "directly-verifiable-signcryption",
+  "version": "1.0.0",
+  "description": "A Directly Public Verifiable Signcryption Scheme based on Elliptic Curves",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test",
+    "compile": "truffle compile",
+    "deploy": "truffle migrate",
+    "blockchain": "truffle develop"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jindada1/Directly-Verifiable-Signcryption.git"
+  },
+  "keywords": [
+    "solidity",
+    "smart-contract"
+  ],
+  "author": "Kris",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jindada1/Directly-Verifiable-Signcryption/issues"
+  },
+  "homepage": "https://github.com/jindada1/Directly-Verifiable-Signcryption#readme",
+  "dependencies": {
+    "web3": "^1.6.0"
+  }
+}
