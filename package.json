@@ -27,6 +27,8 @@
   },
   "homepage": "https://github.com/jindada1/Directly-Verifiable-Signcryption#readme",
   "dependencies": {
+    "js-sha3": "^0.8.0",
+    "noble-secp256k1": "^1.2.14",
     "web3": "^1.6.0"
   }
 }
