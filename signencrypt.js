@@ -55,8 +55,33 @@ function BobK(R, W_A, w_B) {
 }
 
 
+/**
+ * Bob verify signature (R,C,s) from Alice.
+ *
+ * @method verifySignature
+ * @param R    - signature
+ * @param C    - ciphertext
+ * @param s    - signature
+ * @param W_A  - Alice's public key
+ * @param ID_A - Alice's unique identifiers
+ * @param ID_B - Bob's unique identifiers
+ * @return v   - result of verification(True/False).
+ */
+ function verifySignature( R, C, s, W_A, ID_A, ID_B) {
+    // 计算 t
+    let t = utils.keccak256Hash([C, R[0], ID_A, R[1], ID_B]);
+    // 验证签名
+    const S = utils.drivePub(s);
+
+    const S_R = utils.addPoints(S, R);
+    const W_At = utils.mulPoint(W_A, t);
+    
+    return BigInt(S_R[1]) === BigInt(W_At[1])
+}
+
 module.exports = {
     AliceK,
     BobK,
-    signCryption
+    signCryption,
+    verifySignature
 };

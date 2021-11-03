@@ -345,15 +345,54 @@ contract Main {
 }
 ```
 
+### Bob 验签（ js ）
+
+函数：`verifySignature` 返回签名的真假：v
+
+代码见 `signencrypt.js`
+
+```js
+
+/**
+ * Bob verify signature (R,C,s) from Alice.
+ *
+ * @method verifySignature
+ * @param R    - signature
+ * @param C    - ciphertext
+ * @param s    - signature
+ * @param W_A  - Alice's public key
+ * @param ID_A - Alice's unique identifiers
+ * @param ID_B - Bob's unique identifiers
+ * @return v   - result of verification(True/False).
+ */
+ function verifySignature( R, C, s, W_A, ID_A, ID_B) {
+    // 计算 t
+    let t = utils.keccak256Hash([C, R[0], ID_A, R[1], ID_B]);
+    // 验证签名
+    const S = utils.drivePub(s);
+
+    const S_R = utils.addPoints(S, R);
+    const W_At = utils.mulPoint(W_A, t);
+    
+    return BigInt(S_R[1]) === BigInt(W_At[1])
+}
+
+```
+
+
+
 ### 测试
 
 测试脚本在 `./test/` 目录下，智能合约的测试脚本为  `./test/mainContractTest.js` 
 
-为 **签名加密** 和 **验签解密** 设计了三组测试：
+为 **签名加密** 和 **验签解密** 设计了六组测试：
 
 1. js 签名加密 + sol 验签解密：`signCryption-js & unSignCryption-sol`
-2. sol 签名加密 + sol 验签解密：`signCryption-sol & unSignCryption-sol`
-3. js 签名加密 + sol 验签：`signCryption-js & verifySignature-sol`
+2. js 签名加密 + sol 验签：`signCryption-js & verifySignature-sol`
+3. js 签名加密 + js 验签：`signCryption-js & verifySignature-js`
+4. sol 签名加密 + sol 验签解密：`signCryption-sol & unSignCryption-sol`
+5. sol 签名加密 + sol 验签：`signCryption-sol & verifySignature-sol`
+6. sol 签名加密 + js 验签：`signCryption-sol & verifySignature-js`
 
 
 
@@ -369,11 +408,15 @@ $ npm install
 
 ```bash
 $ npm run test
+```
 
 或者
 
+```bash
 $ truffle test
 ```
+
+
 
 ### 单独运行某个测试脚本
 
@@ -381,9 +424,11 @@ $ truffle test
 
 ```bash
 $ npm run test test/mainContractTest.js
+```
 
 或者
 
+```bash
 $ truffle test test/mainContractTest.js
 ```
 

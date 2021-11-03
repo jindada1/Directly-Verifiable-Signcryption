@@ -175,7 +175,6 @@ function hexStringToArray(hexString) {
  * @returns {String}  hexStr, 0x------
  */
 const keccak256Hash = function (hexes) {
-
     let integers = []
 
     for (const hex of hexes) {
@@ -204,22 +203,33 @@ const XOR = function (msg, key) {
     return "0x" + BigInt("0x" + resultBuf.toString('hex')).toString(16);
 };
 
-
-const addHex = (n1, n2) => "0x" + (BigInt(n1) + BigInt(n2)).toString(16);
-const subHex = (n1, n2) => "0x" + (BigInt(n1) - BigInt(n2)).toString(16);
-const mulHex = (n1, n2) => "0x" + (BigInt(n1) * BigInt(n2)).toString(16);
-
+/**
+ * n1 op n2
+ *
+ * @method mod
+ * @param {String} a hex string
+ * @param {String} b hex string
+ * @returns {BigInt}  BigInt
+ */
+const addHex = (n1, n2) => BigInt(n1) + BigInt(n2);
+const mulHex = (n1, n2) => BigInt(n1) * BigInt(n2);
+const subHex = (n1, n2) => BigInt(n1) - BigInt(n2);
 
 /**
  * a mod b
  *
  * @method mod
- * @param {String} a hex string
- * @param {String} b hex string
+ * @param {BigInt} a hex string
+ * @param {BigInt} b hex string
  * @returns {String}  hex string
  */
 const mod = function (a, b = secp256k1.CURVE.n) {
-    return "0x" + (BigInt(a) % BigInt(b)).toString(16);
+    // remove negative
+    if (a < 0) {
+        a = a + BigInt(b)
+    }
+
+    return "0x" + (a % BigInt(b)).toString(16);
 };
 
 module.exports = {
@@ -239,8 +249,8 @@ module.exports = {
     oneAndRightHalf: (str) => "0x1" + str.slice(34),
 
     eccAddHex: (n1, n2) => mod(addHex(n1, n2)),
-    eccSubHex: (n1, n2) => mod(subHex(n1, n2)),
     eccMulHex: (n1, n2) => mod(mulHex(n1, n2)),
+    eccSubHex: (n1, n2) => mod(subHex(n1, n2)),
 
     keypair: (i) => {
         return {

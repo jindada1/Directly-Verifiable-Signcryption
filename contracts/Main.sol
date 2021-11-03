@@ -84,7 +84,7 @@ contract Main {
 
         // 计算签名
         uint256 t_w_A = mulmod(t, w_A, GEN_ORDER);
-        s = t_w_A - r;
+        s = submod(t_w_A, r, GEN_ORDER);
     }
     
     /**
@@ -253,4 +253,15 @@ contract Main {
         R = [Point_R.X, Point_R.Y];
     }
 
+    function submod(uint x, uint y, uint m) public pure returns (uint){
+        uint x_nn;
+
+        if(x > y) {
+            x_nn = x;
+        } else {
+            x_nn = x + GEN_ORDER;
+        }
+
+        return addmod(x_nn - y, 0, m);
+    }
 }
