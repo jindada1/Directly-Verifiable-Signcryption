@@ -54,30 +54,6 @@ const decToHex = function (str) {
     return hex.join('')
 }
 
-var EC = require('elliptic').ec;
-var curve = new EC('secp256k1');
-
-/**
- * Should be called to get public key associated with input private key using 'Secp256k1' elliptic curve
- *
- * @method drivePub
- * @param {String} prikey input private key
- * @returns {Array} hex representation of pubkey.x + pubkey.y
- */
-const drivePub = function (prikey) {
-    if (prikey.startsWith('0x')) {
-        prikey = prikey.slice(2);
-    }
-    var key = curve.keyFromPrivate(prikey)
-
-    var pubPoint = key.getPublic();
-    var x = pubPoint.getX().toString('hex').padStart(64, '0');
-    var y = pubPoint.getY().toString('hex').padStart(64, '0');
-
-    return ["0x" + x, "0x" + y];
-};
-
-
 var crypto = require("crypto");
 
 /**
@@ -90,47 +66,6 @@ var crypto = require("crypto");
 const randomBytes = function (byteLen = 32) {
     var hex = crypto.randomBytes(byteLen).toString('hex');
     return "0x" + hex;
-};
-
-
-const secp256k1 = require("noble-secp256k1");
-
-/**
- * Add two points on elliptic curve (secp256k1)
- *
- * @method addPoints
- * @param {Array} p1 [x: hexStr, y: hexStr]
- * @param {Array} p2 [x: hexStr, y: hexStr]
- * @returns {Array}  [x: hexStr, y: hexStr]
- */
-const addPoints = function (p1, p2) {
-    let SP1 = new secp256k1.Point(...p1.map(BigInt));
-    let SP2 = new secp256k1.Point(...p2.map(BigInt));
-
-    let pkStr = SP1.add(SP2).toHex();
-    return [
-        "0x" + pkStr.slice(2, 66),
-        "0x" + pkStr.slice(66, 130),
-    ]
-};
-
-
-/**
- * Multiply point on elliptic curve (secp256k1) with a number
- *
- * @method mulPoint
- * @param {Array} p1 [x: hexStr, y: hexStr]
- * @param {String} n hexStr
- * @returns {Array}  [x: hexStr, y: hexStr]
- */
-const mulPoint = function (p1, n) {
-    let SP1 = new secp256k1.Point(...p1.map(BigInt))
-
-    let pkStr = SP1.multiply(BigInt(n)).toHex();
-    return [
-        "0x" + pkStr.slice(2, 66),
-        "0x" + pkStr.slice(66, 130),
-    ]
 };
 
 
@@ -203,41 +138,9 @@ const XOR = function (msg, key) {
     return "0x" + BigInt("0x" + resultBuf.toString('hex')).toString(16);
 };
 
-/**
- * n1 op n2
- *
- * @method mod
- * @param {String} a hex string
- * @param {String} b hex string
- * @returns {BigInt}  BigInt
- */
-const addHex = (n1, n2) => BigInt(n1) + BigInt(n2);
-const mulHex = (n1, n2) => BigInt(n1) * BigInt(n2);
-const subHex = (n1, n2) => BigInt(n1) - BigInt(n2);
-
-/**
- * a mod b
- *
- * @method mod
- * @param {BigInt} a hex string
- * @param {BigInt} b hex string
- * @returns {String}  hex string
- */
-const mod = function (a, b = secp256k1.CURVE.n) {
-    // remove negative
-    if (a < 0) {
-        a = a + BigInt(b)
-    }
-
-    return "0x" + (a % BigInt(b)).toString(16);
-};
-
 module.exports = {
     prikeys,
-    drivePub,
     decToHex,
-    mulPoint,
-    addPoints,
     asciiToHex,
     randomBytes,
     keccak256Hash,
@@ -247,15 +150,4 @@ module.exports = {
 
     bnToHex: (bn) => decToHex(bn.toString()),
     oneAndRightHalf: (str) => "0x1" + str.slice(34),
-
-    eccAddHex: (n1, n2) => mod(addHex(n1, n2)),
-    eccMulHex: (n1, n2) => mod(mulHex(n1, n2)),
-    eccSubHex: (n1, n2) => mod(subHex(n1, n2)),
-
-    keypair: (i) => {
-        return {
-            prikey: prikeys[i],
-            pubkey: drivePub(prikeys[i])
-        }
-    }
 };

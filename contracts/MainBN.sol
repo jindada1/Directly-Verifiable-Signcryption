@@ -1,11 +1,11 @@
 pragma solidity ^0.5.17;
 pragma experimental ABIEncoderV2;
 
-import "./Secp256k1.sol";
+import "./BN128.sol";
 
-contract Main {
+contract MainBN {
     
-    uint256 constant public GEN_ORDER = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
+    uint256 constant public GEN_ORDER = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001;
     
     /**
      * @dev AliceK
@@ -23,14 +23,14 @@ contract Main {
     ) public view returns (uint256[2] memory K)
     {
         // 计算该随机数 r 在椭圆曲线 G 上对应的公钥 R，写成坐标形式 (x_R, y_R)
-        Secp256k1.G1Point memory point_R = pMul(curve.P1(), r);
+        BN128.G1Point memory point_R = pMul(BN128.P1(), r);
 
         // 计算 x_RR
         uint256 x_RR = oneAndRightHalf(point_R.X);
 
         // 计算 K，坐标形式为（x_K, y_K）
         uint256 X_RR_x_A = mulmod(x_RR, w_A, GEN_ORDER);
-        Secp256k1.G1Point memory point_K = pMul(point(W_B), addmod(r, X_RR_x_A, GEN_ORDER));
+        BN128.G1Point memory point_K = pMul(point(W_B), addmod(r, X_RR_x_A, GEN_ORDER));
         K = [point_K.X, point_K.Y];
     }
 
@@ -62,11 +62,12 @@ contract Main {
         returns (
             uint256[2] memory R,
             uint256 C,
-            uint256 s
+            uint256 s,
+            uint256 t
         )
     {
         // 计算该随机数 r 在椭圆曲线 G 上对应的公钥 R，写成坐标形式 (x_R, y_R)
-        Secp256k1.G1Point memory point_R = pMul(curve.P1(), r);
+        BN128.G1Point memory point_R = pMul(BN128.P1(), r);
 
         R = [point_R.X, point_R.Y];
 
@@ -80,7 +81,7 @@ contract Main {
         C = k ^ M;
 
         // 计算 t
-        uint256 t = uint256(keccak256(abi.encodePacked(C, point_R.X, ID_A, point_R.Y, ID_B)));
+        t = uint256(keccak256(abi.encodePacked(C, point_R.X, ID_A, point_R.Y, ID_B)));
 
         // 计算签名
         uint256 t_w_A = mulmod(t, w_A, GEN_ORDER);
@@ -106,11 +107,9 @@ contract Main {
         uint256 x_RR = oneAndRightHalf(R[0]);
 
         // 计算 K，坐标形式为（x_K, y_K）
-        Secp256k1.G1Point memory point_K = pMul(pAdd(point(R), pMul(point(W_A), x_RR)), w_B);
+        BN128.G1Point memory point_K = pMul(pAdd(point(R), pMul(point(W_A), x_RR)), w_B);
         K = [point_K.X, point_K.Y];
     }
-
-    Secp256k1 public curve = new Secp256k1();
 
     /**
      * @dev unSignCryption
@@ -134,13 +133,13 @@ contract Main {
         uint256 ID_A,
         uint256 w_B,
         uint256 ID_B
-    ) public view returns (uint256 M, bool v) {
+    ) public view returns (uint256 M, bool v, uint256 t) {
         
         // 计算 x_RR
         uint256 x_RR = oneAndRightHalf(R[0]);
 
         // 计算 K，坐标形式为（x_K, y_K）
-        Secp256k1.G1Point memory point_K = pMul(pAdd(point(R), pMul(point(W_A), x_RR)), w_B);
+        BN128.G1Point memory point_K = pMul(pAdd(point(R), pMul(point(W_A), x_RR)), w_B);
 
         // 使用 keccak256 哈希函数计算密钥 k
         uint256 k = uint256(keccak256(abi.encodePacked(point_K.X, ID_A, point_K.Y, ID_B)));
@@ -149,7 +148,7 @@ contract Main {
         M = k ^ C;
 
         // 验证签名
-        v = verifySignature(R, C, s, W_A, ID_A, ID_B);
+        (v, t) = verifySignature(R, C, s, W_A, ID_A, ID_B);
     }
 
 
@@ -172,22 +171,22 @@ contract Main {
         uint256[2] memory W_A,
         uint256 ID_A,
         uint256 ID_B
-    ) public view returns (bool v) {
+    ) public view returns (bool v, uint256 t) {
 
         // 计算 t
-        uint256 t = uint256(keccak256(abi.encodePacked(C, R[0], ID_A, R[1], ID_B)));
+        t = uint256(keccak256(abi.encodePacked(C, R[0], ID_A, R[1], ID_B)));
 
         // 验证签名
         v = pointEqual(
-            pAdd(pMul(curve.P1(), s), point(R)), 
+            pAdd(pMul(BN128.P1(), s), point(R)), 
             pMul(point(W_A), t)
         );
     }
 
     // 判断曲线上的两个点是否相等
     function pointEqual(
-        Secp256k1.G1Point memory p1,
-        Secp256k1.G1Point memory p2
+        BN128.G1Point memory p1,
+        BN128.G1Point memory p2
     ) internal pure returns (bool) {
         return p1.Y == p2.Y;
     }
@@ -202,25 +201,26 @@ contract Main {
 
     // 椭圆曲线上的加法
     function pAdd (
-        Secp256k1.G1Point memory P1,
-        Secp256k1.G1Point memory P2
-    ) internal view returns(Secp256k1.G1Point memory) {
-        return curve.g1add(P1, P2);
+        BN128.G1Point memory P1,
+        BN128.G1Point memory P2
+    ) internal view returns(BN128.G1Point memory) {
+        return BN128.g1add(P1, P2);
     }
 
     // 椭圆曲线上的乘法
     function pMul (
-        Secp256k1.G1Point memory P,
+        BN128.G1Point memory P,
         uint256 n
-    ) internal view returns(Secp256k1.G1Point memory) {
-        return curve.g1mul2(P, n);
+    ) internal view returns(BN128.G1Point memory) {
+        n = addmod(n, 0, GEN_ORDER);
+        return BN128.g1mul(P, n);
     }
     
     // 将 uint256 数组转化成 Point 对象
     function point(
         uint256[2] memory P
-    ) internal pure returns(Secp256k1.G1Point memory) {
-        return Secp256k1.G1Point(P[0], P[1]);
+    ) internal pure returns(BN128.G1Point memory) {
+        return BN128.G1Point(P[0], P[1]);
     }
 
 
@@ -229,7 +229,7 @@ contract Main {
         view
         returns (uint256[2] memory)
     {
-        Secp256k1.G1Point memory PK = pMul(curve.P1(), prikey);
+        BN128.G1Point memory PK = pMul(BN128.P1(), prikey);
         return [PK.X, PK.Y];
     }
 
@@ -239,7 +239,7 @@ contract Main {
         view
         returns (uint256[2] memory R)
     {
-        Secp256k1.G1Point memory Point_R = pMul(point(P), n);
+        BN128.G1Point memory Point_R = pMul(point(P), n);
         R = [Point_R.X, Point_R.Y];
     }
 
@@ -249,7 +249,7 @@ contract Main {
         view
         returns (uint256[2] memory R)
     {
-        Secp256k1.G1Point memory Point_R = pAdd(point(P1), point(P2));
+        BN128.G1Point memory Point_R = pAdd(point(P1), point(P2));
         R = [Point_R.X, Point_R.Y];
     }
 
