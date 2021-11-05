@@ -2,8 +2,6 @@ const utils = require("./utils")
 
 function Signer(curve) {
 
-    // let curve = curve
-
     function AliceK(r, w_A, W_B) {
 
         const R = curve.drivePub(r);

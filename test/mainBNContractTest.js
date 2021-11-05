@@ -29,7 +29,8 @@ contract('MainBN', (accounts) => {
         const Bpubkey = await mainbn.drivePubkey(Bob.prikey);
         Bob.pubkey = Bpubkey.map(utils.bnToHex)
 
-        r = utils.randomBytes(31)
+        // mod bn128.order
+        r = bn128.eccAddHex(utils.randomBytes(32), 0)
         const Rpubkey = await mainbn.drivePubkey(r);
         R = Rpubkey.map(utils.bnToHex)
 
@@ -39,20 +40,6 @@ contract('MainBN', (accounts) => {
         W_A = Alice.pubkey;
         w_B = Bob.prikey
         W_B = Bob.pubkey
-    });
-
-
-    it(`oneAndRightHalf`, async () => {
-
-        const mainbn = await MainBN.deployed();
-
-        let RhSol = await mainbn.oneAndRightHalf(Bob.prikey);
-        RhSol = utils.bnToHex(RhSol)
-
-        const RhJs = utils.oneAndRightHalf(Bob.prikey);
-        // console.log(RhSol, RhJs);
-
-        assert.equal(RhSol, RhJs, 'ooops');
     });
 
 

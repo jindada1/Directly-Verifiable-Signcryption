@@ -67,10 +67,10 @@ const mulPoint = function (p1, n) {
  *
  * @method mod
  * @param {BigInt} a hex string
- * @param {BigInt} b hex string
+ * @param {String} b hex string
  * @returns {String}  hex string
  */
- const mod = function (a, b = secp256k1.CURVE.n) {
+ const mod = function (a, b = "0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001") {
     // remove negative
     if (a < 0) {
         a = a + BigInt(b)
@@ -89,7 +89,7 @@ module.exports = {
     eccSubHex: (n1, n2) => mod(BigInt(n1) - BigInt(n2)),
     keypair: (prikey) => {
         return {
-            prikey,
+            prikey: mod(BigInt(prikey)),
             pubkey: "emmmm"
         }
     }
