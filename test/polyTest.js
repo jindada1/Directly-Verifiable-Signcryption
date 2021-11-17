@@ -3,6 +3,13 @@ const Poly = artifacts.require("Poly.sol");
 contract('Poly', (accounts) => {
 
     const toNum = bn => bn.toNumber()
+    
+    const toFloat = (ns, precise = 2) => {
+        let str = ns[1] > 0 ? `${ns[0]}.` : `${-ns[0]}.`
+        let dec = ns[1] < 0? -ns[1] : ns[1]
+        str += dec.toString().padStart(precise, '0')
+        return parseFloat(str).toFixed(precise)
+    }
 
     it(`InterpolateInt`, async () => {
         const poly = await Poly.deployed();
@@ -13,6 +20,7 @@ contract('Poly', (accounts) => {
 
         let y = await poly.InterpolateInt(X, Y, x);
         // console.log(y.toString());
+        assert.equal(y.toNumber(), -4, 'x = 6');
     });
 
     it(`Pconvert`, async () => {
@@ -27,34 +35,12 @@ contract('Poly', (accounts) => {
     it(`Add`, async () => {
         const poly = await Poly.deployed();
 
-        const x = [5, 60]
-        const y = [5, 60]
-
-        let res = await poly.DoubleAdd(x, y);
-
-        assert.deepEqual(res.map(toNum), [11, 20], '5.6 + 5.6');
-    });
-
-    it(`Add`, async () => {
-        const poly = await Poly.deployed();
-
-        const x = [5, 06]
-        const y = [-5, 60]
-
-        let res = await poly.DoubleAdd(x, y);
-
-        assert.deepEqual(res.map(toNum), [0, -54], '5.06 + -5.60');
-    });
-
-    it(`Add`, async () => {
-        const poly = await Poly.deployed();
-
         const x = [5, 06]
         const y = [-6, 60]
 
         let res = await poly.DoubleAdd(x, y);
 
-        assert.deepEqual(res.map(toNum), [-1, 54], '5.06 + -6.60');
+        assert.equal(toFloat(res), -1.54, `${toFloat(x)} + ${toFloat(y)}`);
     });
 
     it(`Sub`, async () => {
@@ -68,37 +54,15 @@ contract('Poly', (accounts) => {
         assert.deepEqual(res.map(toNum), [1, 16], '0.56 - -0.60');
     });
 
-    it(`Sub`, async () => {
+    it(`Mul`, async () => {
         const poly = await Poly.deployed();
 
-        const x = [0, -56]
-        const y = [0, 30]
+        const x = [10000, 16]
+        const y = [0, 50]
 
-        let res = await poly.DoubleSub(x, y);
+        let res = await poly.DoubleMul(x, y);
 
-        assert.deepEqual(res.map(toNum), [0, -86], '-0.56 - 0.30');
-    });
-
-    it(`Sub`, async () => {
-        const poly = await Poly.deployed();
-
-        const x = [1, 16]
-        const y = [2, 30]
-
-        let res = await poly.DoubleSub(x, y);
-
-        assert.deepEqual(res.map(toNum), [-1, 14], '1.16 - 2.30');
-    });
-
-    it(`Sub`, async () => {
-        const poly = await Poly.deployed();
-
-        const x = [1, 16]
-        const y = [1, 30]
-
-        let res = await poly.DoubleSub(x, y);
-
-        assert.deepEqual(res.map(toNum), [0, -14], '1.16 - 1.30');
+        assert.deepEqual(res.map(toNum), [5000, 8], '10000.16 * 0.50');
     });
 
     it(`Div`, async () => {
@@ -112,39 +76,6 @@ contract('Poly', (accounts) => {
         assert.deepEqual(res.map(toNum), [0, 89], '1.16 / 1.30');
     });
 
-    it(`Div`, async () => {
-        const poly = await Poly.deployed();
-
-        const x = [1, 16]
-        const y = [-1, 30]
-
-        let res = await poly.DoubleDiv(x, y);
-
-        assert.deepEqual(res.map(toNum), [0, -89], '1.16 / -1.30');
-    });
-
-    it(`Mul`, async () => {
-        const poly = await Poly.deployed();
-
-        const x = [1, 16]
-        const y = [-1, 30]
-
-        let res = await poly.DoubleMul(x, y);
-
-        assert.deepEqual(res.map(toNum), [-1, 50], '1.16 * -1.30');
-    });
-
-    it(`Mul`, async () => {
-        const poly = await Poly.deployed();
-
-        const x = [10000, 16]
-        const y = [0, 50]
-
-        let res = await poly.DoubleMul(x, y);
-
-        assert.deepEqual(res.map(toNum), [5000, 8], '10000.16 * 0.50');
-    });
-
     it(`Interpolate`, async () => {
         const poly = await Poly.deployed();
 
@@ -152,11 +83,23 @@ contract('Poly', (accounts) => {
         const Y = [-1, 0, 1, 0, 1, 0]
         const x = [2, 50]
 
-        for (const p of [100, 1000, 10000, 100000]) {
-            await poly.setPrecise(p);
-            let d = await poly.Interpolate(X, Y, [2, parseInt(p/2)]);
-            console.log(p, d.map(toNum));
+        precise_result = []
+
+        for (const p of [2, 3, 4]) {
+            let pow = 10 ** p
+
+            // calc y where x = 2.5
+            await poly.setPrecise(pow);
+            let d = await poly.Interpolate(X, Y, [2, parseInt(pow * 0.5)]);
+            
+            precise_result.push({
+                precise: 1 / pow,
+                result: toFloat(d.map(toNum), p),
+                right: 2.125
+            })
         }
+
+        console.table(precise_result);
     });
 
 });

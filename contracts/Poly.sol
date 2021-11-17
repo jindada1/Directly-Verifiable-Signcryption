@@ -17,12 +17,14 @@ contract Poly {
         require(X.length == Y.length);
         y = 0;
         for (uint256 i = 0; i < Y.length; i++) {
-            int256 b = Y[i];
+            int256 b1 = Y[i];
+            int256 b2 = 1;
             for (uint256 j = 0; j < X.length; j++) {
                 if (i == j) continue;
-                b = (b * (x - X[j])) / (X[i] - X[j]);
+                b1 = b1 * (x - X[j]);
+                b2 = b2 * (X[i] - X[j]);
             }
-            y += b;
+            y += b1 / b2;
         }
     }
 
