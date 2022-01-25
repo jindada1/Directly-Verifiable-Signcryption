@@ -47,7 +47,7 @@ function Signer(curve) {
         const k = utils.keccak256Hash([K[0], ID_A, K[1], ID_B])
 
         const C = utils.encrypt(M, k);
-
+        
         const t = utils.keccak256Hash([C, R[0], ID_A, R[1], ID_B])
 
         const s = curve.eccSubHex(curve.eccMulHex(t, w_A), r)
@@ -80,11 +80,35 @@ function Signer(curve) {
         return BigInt(S_R[1]) === BigInt(W_At[1])
     }
 
+
+    /**
+     * Bob verify signature (R,C,s) from Alice.
+     *
+     * @method verifySignature
+     * @param R    - signature
+     * @param C    - ciphertext
+     * @param s    - signature
+     * @param W_A  - Alice's public key
+     * @param ID_A - Alice's unique identifiers
+     * @param w_B  - Bob's private key
+     * @param ID_B - Bob's unique identifiers
+     * @return v   - result of verification(True/False).
+     */
+    function unSignCryption(R, C, s, W_A, ID_A,w_B,ID_B) {
+        const [x_RR, K]=BobK(R,W_A,w_B);
+        const k = utils.keccak256Hash([K[0], ID_A, K[1], ID_B])
+
+        // // 使用 k 对 M 进行解密，用 xor
+        let M=utils.decrypt(C,k);
+        return M;    
+    }
+
     return {
         AliceK,
         BobK,
         signCryption,
-        verifySignature
+        verifySignature,
+        unSignCryption
     }
 }
 

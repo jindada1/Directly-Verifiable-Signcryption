@@ -1,3 +1,31 @@
+let CryptoJS = require('crypto-js')
+const aesUtil = {
+    
+    encrypt: (msg, keyStr) => {
+      var encryptedObj = CryptoJS.AES.encrypt(JSON.stringify(msg), keyStr, 
+        {
+          mode: CryptoJS.mode.ECB,
+          padding: CryptoJS.pad.Pkcs7,
+        },
+      )      
+      // console.log(encryptedObj.toString(),keyStr)
+      return asciiToHex(encryptedObj.toString()) 
+    },
+    
+    decrypt: (ctStr, keyStr) => {
+      // console.log(hex2ascii(ctStr),keyStr)
+      let bytes = CryptoJS.AES.decrypt(hex2ascii(ctStr),keyStr,
+        {
+          mode:CryptoJS.mode.ECB,
+          padding:CryptoJS.pad.Pkcs7,
+        },
+      )
+      // console.log(bytes)
+      var originalText = bytes.toString(CryptoJS.enc.Utf8);
+      return JSON.parse(originalText).msg;
+    },
+  }
+
 const prikeys = [
     "0xf086cff7f8f85b80d33aa34eb1f912407b613a63aaede6ff996ae79e037ed7a7",
     "0xccbd180f02d4ab3a824343d5d17cd408ca68b72d19a4a779386190fcac4c562d",
@@ -28,8 +56,46 @@ const asciiToHex = function (str) {
         hex += n.length < 2 ? '0' + n : n;
     }
 
-    return "0x" + hex;
+    return hex;
 };
+
+var dec2utf8 = function (arr) {
+    if (typeof arr === 'string') {
+        return arr;
+    }
+
+    var unicodeString = '', _arr = arr;
+    for (var i = 0; i < _arr.length; i++) {
+        var one = _arr[i].toString(2);
+        var v = one.match(/^1+?(?=0)/);
+
+        if (v && one.length === 8) {
+            var bytesLength = v[0].length;
+            var store = _arr[i].toString(2).slice(7 - bytesLength);
+
+            for (var st = 1; st < bytesLength; st++) {
+                store += _arr[st + i].toString(2).slice(2)
+            }
+
+            unicodeString += String.fromCharCode(parseInt(store, 2));
+            i += bytesLength - 1;
+        } else {
+            unicodeString += String.fromCharCode(_arr[i]);
+        }
+    }
+    return unicodeString
+};
+
+const hex2ascii=function(hexx) {
+    var hex = hexx.toString();//force conversion
+    
+    var str_list = [];
+    for (var i = 0; (i < hex.length && hex.substr(i, 2) !== '00'); i += 2)
+        str_list.push(parseInt(hex.substr(i, 2), 16));
+    
+    return dec2utf8(str_list);
+}
+
 
 /**
  * Should be called to get hex representation (prefixed by 0x) of decimal number string
@@ -142,11 +208,15 @@ module.exports = {
     prikeys,
     decToHex,
     asciiToHex,
+    hex2ascii,
     randomBytes,
     keccak256Hash,
 
-    encrypt: XOR,
-    decrypt: XOR,
+    encrypt: aesUtil.encrypt,
+    decrypt: aesUtil.decrypt,
+
+    // encrypt: XOR,
+    // decrypt: XOR,
 
     bnToHex: (bn) => decToHex(bn.toString()),
     oneAndRightHalf: (str) => "0x1" + str.slice(34),

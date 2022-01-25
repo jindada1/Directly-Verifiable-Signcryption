@@ -33,8 +33,29 @@ contract MainBN {
         BN128.G1Point memory point_K = pMul(point(W_B), addmod(r, X_RR_x_A, GEN_ORDER));
         K = [point_K.X, point_K.Y];
     }
+    mapping(uint256 => uint256) public pks;
+    function recordPK(uint256[2] memory W_B) public {
+        pks[W_B[1]]=W_B[0];
+    }
+    struct Sigs1 {
+        uint256[2] R;
+        uint256 s;
+    }
+    struct Sigs2 {
+        uint256[2] R;
+        uint256 C;
+        uint256 s;
+    }
+    mapping(uint256 => Sigs1) public sigs1;
+    mapping(uint256 => Sigs2) public sigs2;
+    function recordSignature1(uint256[2] memory R,uint256 s, uint256 t) public {        
+        sigs1[t]= Sigs1({R: R, s: s});
+    }
 
-
+    function recordSignature2(uint256[2] memory R, uint256 C,uint256 s) public {
+        uint256 t = uint256(keccak256(abi.encodePacked(C, R[0], R[1])));
+        sigs2[t]=Sigs2({R: R, C:C, s: s});
+    }
     /**
      * @dev signCryption
      * Alice generates the signcrypted text (R,C,s) to Bob.
@@ -174,7 +195,7 @@ contract MainBN {
     ) public view returns (bool v, uint256 t) {
 
         // 计算 t
-        t = uint256(keccak256(abi.encodePacked(C, R[0], ID_A, R[1], ID_B)));
+        t = C;//uint256(keccak256(abi.encodePacked(C, R[0], ID_A, R[1], ID_B)));
 
         // 验证签名
         v = pointEqual(

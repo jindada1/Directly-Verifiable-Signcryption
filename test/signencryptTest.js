@@ -9,7 +9,8 @@ let Bob = secp256k1.keypair(utils.prikeys[1])
 
 let r = utils.randomBytes(32);
 let R = secp256k1.drivePub(r)
-let M = utils.asciiToHex("Hello Bob")
+let M = Array.from('12345abcde'.repeat(102400)).join("")
+// let M = utils.asciiToHex("Hello Bob")
 let ID_A = Alice.pubkey[0]
 let ID_B = Bob.pubkey[0]
 let w_A = Alice.prikey;
@@ -28,8 +29,10 @@ it('signCryption-js & verifySignature-js', async () => {
      * @param uint256[2] W_B  - Bob's public key
      * @param uint256    ID_B - Bob's unique identifiers
      */
+    let startTime =new Date().getTime()
     let { R, C, s } = signer.signCryption(r, w_A, ID_A, M, W_B, ID_B);
-    // console.log({R, C, s});
+    console.log({R, C, s});
+    console.log("signCryption time:", new Date().getTime()- startTime )
 
     /**
      * @param R    - signature
@@ -45,4 +48,12 @@ it('signCryption-js & verifySignature-js', async () => {
      * @return bool    v   - result of verification(True/False).
      */
     assert.equal(validation, true, 'oops');
+
+    startTime =new Date().getTime()
+    const M_p = signer.unSignCryption(R, C, s, W_A, ID_A, w_B, ID_B);
+    console.log("unSignCryption time:", new Date().getTime()- startTime )
+    // assert.equal(M_p, M, 'oops');
+
+
+    
 });
